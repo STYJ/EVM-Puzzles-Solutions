@@ -37,28 +37,20 @@ There's nothing new here that you don't already know. The `MUL` opcode stands fo
 
 This is the first tough puzzle. Let's walk through this together step by step.
 
-Instruction NAME            STACK           MEMORY
-=====================================================
-00          CALLDATASIZE    CALLDATASIZE
-01          PUSH1 00        CALLDATASIZE
-                            0
-03          DUP1            CALLDATASIZE
-                            0
-                            0
-04          CALLDATACOPY                        CALLDATA
-05          CALLDATASIZE    CALLDATASIZE        CALLDATA
-06          PUSH1 00        CALLDATASIZE        CALLDATA
-                            0
-08          PUSH1 00        CALLDATASIZE        CALLDATA
-                            0
-                            0
-0A          CREATE          ADDR                CALLDATA
-0B          EXTCODESIZE     EXTCODESIZE         CALLDATA
-0C          PUSH1 01        EXTCODESIZE         CALLDATA
-                            1
-0E          EQ              EQ(1, EXTCODESIZE)  CALLDATA
-0F          PUSH1 13        EQ(1, EXTCODESIZE)  CALLDATA
-                            13
+| Instruction | NAME             | STACK                          | MEMORY     |
+|-------------|------------------|--------------------------------|------------|
+| 00          | CALLDATASIZE     | CALLDATASIZE                   |            |
+| 01          | PUSH1 00         | CALLDATASIZE <br /> 0          |            |
+| 03          | DUP1             | CALLDATASIZE <br /> 0 <br /> 0 |            |
+| 04          | CALLDATACOPY     |                                | CALLDATA   |
+| 05          | CALLDATASIZE     | CALLDATASIZE                   | CALLDATA   |
+| 06          | PUSH1 00         | CALLDATASIZE <br /> 0          | CALLDATA   |
+| 08          | PUSH1 00         | CALLDATASIZE <br /> 0 <br /> 0 | CALLDATA   |
+| 0A          | CREATE           | ADDR                           | CALLDATA   |
+| 0B          | EXTCODESIZE      | EXTCODESIZE                    | CALLDATA   |
+| 0C          | PUSH1 01         | EXTCODESIZE  <br /> 1          | CALLDATA   |
+| 0E          | EQ               | EQ(1, EXTCODESIZE)             | CALLDATA   |
+| 0F          | PUSH1 13         | EQ(1, EXTCODESIZE) <br /> 13   | CALLDATA   |
 cont...
 
 Looking at the instructions, we need to solve for `EQ(1, EXTCODESIZE)`. If we can somehow get `EXTCODESIZE` to be 1, this `EQ` comparison will return 1 thus allowing us to jump to location 13. We know that we want a series of opcodes such that after executing the instructions, it returns something of 1 byte. In order to return anything, we need to use the `RETURN` opcode. This opcode takes the top 2 values on the stack as offset O and size S. It will proceed to return S amount of bytes **in memory** after offset O.
@@ -71,32 +63,34 @@ If you didn't fully understand this explanation, play around with the playground
 
 Puzzle 8 is very similar to puzzle 7. The goal of this level is to deploy a contract such that if you tried to do a plain `CALL` on it, it needs to revert i.e. the return value of `CALL` is 0. This level is a bit more tricky because you need to understand how numbers are padded when added to memory. Try storing the value 1 into memory and see what you get! Like puzzle 7, there are many solutions to this level so here is one possible solution `0x646003565BFD6000526005601BF3`. At a high level, this solution can be broken down to the following:
 
-PUSHX <CONTRACT TO PUSH IN OPCODES>
-PUSH1 00
-MSTORE
-PUSHY <SIZE OF CONTRACT>
-PUSHZ <OFFSET TO RETRIEVE ONLY THE CONTRACT FROM MEMORY>
-F3
+| NAME                                                      |
+|-----------------------------------------------------------|
+| PUSHX CONTRACT TO PUSH IN OPCODES                         |
+| PUSH1 00                                                  |
+| MSTORE                                                    |
+| PUSHY SIZE OF CONTRACT                                    |
+| PUSHZ OFFSET TO RETRIEVE ONLY THE CONTRACT FROM MEMORY    |
+| RETURN                                                    |
 
 In my solution, my contract is `6003565BFE`. This has 5 bytes so 
 
-OPCODES         NAME
-=====================
-646003565BFD    PUSH5 6003565BFE (contract)
-6000            PUSH1 00
-52              MSTORE
-6005            PUSH1 05 (size)
-601B            PUSH1 27 (offset)
-F3              RETURN
+| OPCODES         | NAME                        |
+|-----------------|-----------------------------|
+| 646003565BFD    | PUSH5 6003565BFE (contract) |
+| 6000            | PUSH1 00                    |
+| 52              | MSTORE                      |
+| 6005            | PUSH1 05 (size)             |
+| 601B            | PUSH1 27 (offset)           |
+| F3              | RETURN                      |
 
 You can break `6003565BFE` down to
 
-OPCODES         NAME
-=====================
-6003            PUSH1 03
-56              JUMP
-5B              JUMPDEST
-FD              REVERT
+| OPCODES        | NAME     |
+|----------------|----------|
+| 6003           | PUSH1 03 |
+| 56             | JUMP     |
+| 5B             | JUMPDEST |
+| FD             | REVERT   |
 
 which basically does nothing but revert.
 
