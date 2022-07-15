@@ -19,19 +19,11 @@ Puzzle 2 introduces 2 new opcodes `CODESIZE` and `SUB`. `CODESIZE` gets you the 
 
 ## Puzzle 3
 
-calldatasize gets you size of calldata
-0x00 = size of 1
-something jump, location of jumpdest = instruction 4
-solution = 0x00000000 or any 8 hexidecimal characters
+If you understood puzzles 1 and 2, puzzle 3 should be a piece of cake :) If you didn't understand puzzles 1 and 2, go and read the walkthroughs again. The solution to this puzzle is anything of length 4 bytes e.g. 0x00000000 or 0xffffffff or 0x12345678
 
 ## Puzzle 4
 
-xor(codesize, callvalue)
-
-codesize = 12 = 1100
-jumpdest = 10 = 1010
-callvalue should be 6 or 0110
-xor(1100, 0110) = 1010
+Similar to puzzle 2, we're tasked to solve this math equation `XOR(CODESIZE, CALLVALUE)`. `XOR` stands for [exclusive or](https://en.wikipedia.org/wiki/Exclusive_or). We need a value for `CALLVALUE` such that the output of `XOR` returns 10 since that is where `JUMPDEST` is located. `XOR` is a bitwise operator so we need to convert `CODESIZE` and `JUMPDEST` into their respective binary form. `CODESIZE` has a value of 12 which is 1100 in binary. `JUMPDEST` has a value of 10 which is `1010` in binary. The equation we need to solve is this `XOR(1100, CALLVALUE) = 1010`. `CALLVALUE` therefore needs to be 6 or 0110 for the `XOR` operation to return 10. The solution to this puzzle is 6.
 
 ## Puzzle 5
 
