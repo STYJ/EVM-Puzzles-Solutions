@@ -27,82 +27,85 @@ Similar to puzzle 2, we're tasked to solve this math equation `XOR(CODESIZE, CAL
 
 ## Puzzle 5
 
-1. callvalue
-2. callvalue, callvalue
-3. callvalue^2
-4. callvalue^2, 0x0100
-5. eq(callvalue^2, 0x0100)
-location alr specified as 0c. jumpi is conditional jump only if b is true
-i.e. eq needs to return 1. 0x0100 = 256 so callvalue should be 16 as 16^2 = 256.
+There's nothing new here that you don't already know. The `MUL` opcode stands for multiply. We need this equation `EQ(CALLVALUE * CALLVALUE, 0x0100)` to return 1. 0x0100 has a value of 256 so sqrt of 256 is 16! The solution to this puzzle is 16.
 
 ## Puzzle 6
 
-Want to load 32 bytes from offset of 0 in calldata
-solution = 0x000000000000000000000000000000000000000000000000000000000000000a
+`CALLDATALOAD` takes an offset to load 32 bytes from. Our offset is 0 (from `PUSH1 00`) so we just need `CALLDATA` to be 32 bytes with the last byte being `0a` (the location of `JUMPDEST`). The solution to this puzzle is 0x000000000000000000000000000000000000000000000000000000000000000a
 
 ## Puzzle 7
 
-This was pretty tough. Had to compare the playground examples for create vs extcodesize on evm.codes.
+This is the first tough puzzle. Let's walk through this together step by step.
 
-I noticed 2 diff
+Instruction NAME            STACK           MEMORY
+=====================================================
+00          CALLDATASIZE    CALLDATASIZE
+01          PUSH1 00        CALLDATASIZE
+                            0
+03          DUP1            CALLDATASIZE
+                            0
+                            0
+04          CALLDATACOPY                        CALLDATA
+05          CALLDATASIZE    CALLDATASIZE        CALLDATA
+06          PUSH1 00        CALLDATASIZE        CALLDATA
+                            0
+08          PUSH1 00        CALLDATASIZE        CALLDATA
+                            0
+                            0
+0A          CREATE          ADDR                CALLDATA
+0B          EXTCODESIZE     EXTCODESIZE         CALLDATA
+0C          PUSH1 01        EXTCODESIZE         CALLDATA
+                            1
+0E          EQ              EQ(1, EXTCODESIZE)  CALLDATA
+0F          PUSH1 13        EQ(1, EXTCODESIZE)  CALLDATA
+                            13
+cont...
 
-1) the first byte is diff
-2) there's a substring that looks very similar but also has 1 byte diff
+Looking at the instructions, we need to solve for `EQ(1, EXTCODESIZE)`. If we can somehow get `EXTCODESIZE` to be 1, this `EQ` comparison will return 1 thus allowing us to jump to location 13. We know that we want a series of opcodes such that after executing the instructions, it returns something of 1 byte. In order to return anything, we need to use the `RETURN` opcode. This opcode takes the top 2 values on the stack as offset O and size S. It will proceed to return S amount of bytes **in memory** after offset O.
 
-create = 0x63FFFFFFFF60005260046000F3
-extcodesize = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60005260206000f3
+Since we only want to return 1 byte, we will use a size of 1. We can also use an offset of 0 because the scratch space (first 64 bytes) is big enough for this. The last 5 bytes of our calldata should be `60016000F3`. Our memory is still empty so we need some opcodes to move stuff from the stack to memory i.e. `60<1 byte>600052`. Putting these 2 sets of instructions together, we get `60<1 byte>60005260016000f3`. A solution to this puzzle is `60<1 byte>60005260016000f3` e.g. `60ff60005260016000f3`.
 
-0x7f = 127
-0x63 = 99
-
-0x04 = 4 bytes
-0x20 = 32 bytes
-
-since diff is 27 bytes, 127-99 is also 28 bytes. I figured maybe my first byte should be 0x60 = 96 and I should use 0x01 i.e.
-
-create = 63<any 4 bytes>60005260 04 6000F3
-extcodesize = 7f<any 64 bytes>60005260 20 6000f3
-solution = 60<any 1 byte>60005260 01 6000f3
-
-these are opcodes btw.
-
-push size onto memory and return
+If you didn't fully understand this explanation, play around with the playground examples for `CREATE` and `EXTCODESIZE` before re-reading this again.
 
 ## Puzzle 8
 
-Similar to puzzle 7, walk through it. The goal is to deploy a contract that if you tried to do a plain .call on it, it needs to revert so that the output of .call is 0.
+Puzzle 8 is very similar to puzzle 7. The goal of this level is to deploy a contract such that if you tried to do a plain `CALL` on it, it needs to revert i.e. the return value of `CALL` is 0. This level is a bit more tricky because you need to understand how numbers are padded when added to memory. Try storing the value 1 into memory and see what you get! Like puzzle 7, there are many solutions to this level so here is one possible solution `0x646003565BFD6000526005601BF3`. At a high level, this solution can be broken down to the following:
 
-0x67600035600757FE5B60005260086018F3
-0x646003565BFD6000526005601BF3
+PUSHX <CONTRACT TO PUSH IN OPCODES>
+PUSH1 00
+MSTORE
+PUSHY <SIZE OF CONTRACT>
+PUSHZ <OFFSET TO RETRIEVE ONLY THE CONTRACT FROM MEMORY>
+F3
 
-0x646003565BFD  PUSH5 6003565BFE
+In my solution, my contract is `6003565BFE`. This has 5 bytes so 
+
+OPCODES         NAME
+=====================
+646003565BFD    PUSH5 6003565BFE (contract)
 6000            PUSH1 00
-52              MSTORe
-6005            PUSH1 05
-601B            PUSH1 27
+52              MSTORE
+6005            PUSH1 05 (size)
+601B            PUSH1 27 (offset)
 F3              RETURN
 
+You can break `6003565BFE` down to
 
-The contract does this
-
+OPCODES         NAME
+=====================
 6003            PUSH1 03
 56              JUMP
 5B              JUMPDEST
 FD              REVERT
 
-Which basically does nothing but revert. I tried purely revert only e.g. 0x6160FD6000526002601DF3 or 0x60FD6000526001601EF3 but it wouldn't pass
+which basically does nothing but revert.
+
+A solution to this puzzle is `0x646003565BFD6000526005601BF3`
 
 ## Puzzle 9
 
-Really easy compared to 7 and 8. Walk through the opcodes, basically you want to specify something for calldata such that lt(3, calldatasize) and callvalue such that calldata * callvalue = 8. The only solution to this is either calldatasize = 4 and value = 2 or calldatasize = 8 and value = 1
-
-0xffffffff, 2
-0xffffffffffffffff, 1
+Puzzle 7 and 8 are the hardest so if you can complete those 2, the rest should be a piece of cake! Like the previous challenges, walk through the opcodes to understand what you're looking for. We're solving for `CALLDATA` and `CALLVALUE` such that `LT(3, CALLDATASIZE)` and `CALLDATA` * `CALLVALUE` = 8. The solutions to this puzzle are either 1) calldatasize of 4 and a value of 2 e.g. 0xffffffff, 2 or 2) calldatasize of 8 and a value of 1 e.g. 0xffffffffffffffff, 1.
 
 ## Puzzle 10
 
-
-Similar to 9. Just walk throughh the opcodes. You'll realise you need to specify callvalue such that add(callvalue, 0a) gets you 0x19 i.e. callvalue = 15 or 0xff. You also need to figure out a value for calldatasize such that mod(calldatasize, 3) returns 0 so any multiple of 3 will do. 
-
-callvalue 15
-calldata 0xffffff
+We're trying to solve for `CALLVALUE` such that `ADD(CALLVALUE, 0x0a)` gets you 0x19 (decimal for 26). We know that 0x0a is 11 so 26 - 11 = 15 i.e. `CALLVALUE` is 15 or 0xff. You also need to figure out a value for `CALLDATASIZE` such that `MOD(CALLDATASIZE, 3)` returns 0 so any multiple of 3 will do. The solutions to this puzzle are callvalue of 15 and calldata whose length is a multiple of 3 e.g. 0xffffff.
