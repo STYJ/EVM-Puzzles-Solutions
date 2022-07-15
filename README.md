@@ -11,13 +11,11 @@ A walkthrough of the solutions for each puzzle. Kudos to [Franco](https://twitte
 
 ## Puzzle 1
 
-The first instruction is `CALLVALUE` which gets `msg.value` and pushes it onto the stack. The next instruction is `JUMP` which takes 1 input from the stack (which in this case is `CALLVALUE`) and jumps to that location. You can only jump to where there exists a `JUMPDEST` opcode. In this puzzle, `JUMPDEST` is at instruction 8 so that is where we want to go. The solution is therefore 8.
+The first instruction is `CALLVALUE` which gets `msg.value` and pushes it onto the stack. The next instruction is `JUMP` which takes 1 input from the stack (which in this case is `CALLVALUE`) and jumps to that location. You can only jump to where there exists a `JUMPDEST` opcode. In this puzzle, `JUMPDEST` is at instruction 8 so that is where we want to go. The solution to this puzzle is 8.
 
 ## Puzzle 2
 
-each instruction 1 byte
-10 instructions so 10 bytes or 320 bits
-you want sub(10, something) = 6 since that's where jumpdest is at so answer = 4
+Puzzle 2 introduces 2 new opcodes `CODESIZE` and `SUB`. `CODESIZE` gets you the size of the code where each instruction is 1 byte and `SUB` is just subtract. Walking through the instruction, we're tasked to solve this mathematical equation `SUB(10, CODESIZE) = 6`. We can rearrange the formula to solve for `CODESIZE` i.e. 4. The solution to this puzzle is 4. 
 
 ## Puzzle 3
 
