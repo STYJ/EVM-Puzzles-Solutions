@@ -1,14 +1,17 @@
 # Solutions
 
-Original readme is in the next section
+A walkthrough of the solutions for each puzzle. Kudos to [Franco](https://twitter.com/fvictorio_nan) for these brain exercises!
+
+# Tips
+
+- Search on evm.codes for anything you do not know.
+- Use evm.codes playground to get a better feel for what's going on
+- Write it out on paper and walk through. Remember the EVM is stack based so FILO (or LOFI whichever you recognise).
+
 
 ## Puzzle 1
 
-callvalue gets msg.value and pushes it on the stack
-jump takes 1 input from the stack as the location to go to
-we can only jump to locations with jumpdest 
-since jumpdest is at instruction 8, that's where we want to go
-so the solution is 8.
+The first instruction is `CALLVALUE` which gets `msg.value` and pushes it onto the stack. The next instruction is `JUMP` which takes 1 input from the stack (which in this case is `CALLVALUE`) and jumps to that location. You can only jump to where there exists a `JUMPDEST` opcode. In this puzzle, `JUMPDEST` is at instruction 8 so that is where we want to go. The solution is therefore 8.
 
 ## Puzzle 2
 
@@ -113,23 +116,3 @@ Similar to 9. Just walk throughh the opcodes. You'll realise you need to specify
 
 callvalue 15
 calldata 0xffffff
-
----
-
-# EVM puzzles
-
-A collection of EVM puzzles. Each puzzle consists on sending a successful transaction to a contract. The bytecode of the contract is provided, and you need to fill the transaction data that won't revert the execution.
-
-## How to play
-
-Clone this repository and install its dependencies (`npm install` or `yarn`). Then run:
-
-```
-npx hardhat play
-```
-
-And the game will start.
-
-In some puzzles you only need to provide the value that will be sent to the contract, in others the calldata, and in others both values.
-
-You can use [`evm.codes`](https://www.evm.codes/)'s reference and playground to work through this.
